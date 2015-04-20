@@ -154,7 +154,7 @@ SteamTradeOffers.prototype._loadInventory = function(inventory, uri, options, co
     }
     if (!body || !body.rgInventory || !body.rgDescriptions || !body.rgCurrency) {
       this.emit('debug', 'loading inventory: invalid response');
-      return callback(new Error('Invalid Response'));
+      return callback(new Error(403));
     }
 
     inventory = inventory.concat(mergeWithDescriptions(body.rgInventory, body.rgDescriptions, contextid)
