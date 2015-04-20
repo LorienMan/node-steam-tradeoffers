@@ -147,7 +147,7 @@ SteamTradeOffers.prototype._loadInventory = function(inventory, uri, options, co
     options.uri = options.uri + '&' + querystring.stringify({ 'start': start });
   }
 
-  this._request.get(options, function(error, response, body) {
+  this._requtrest.get(options, function(error, response, body) {
     if (error || response.statusCode != 200) {
       this.emit('debug', 'loading inventory: ' + (error || response.statusCode != 200));
       return callback(error || new Error(response.statusCode));
@@ -165,6 +165,54 @@ SteamTradeOffers.prototype._loadInventory = function(inventory, uri, options, co
       callback(null, inventory);
     }
   }.bind(this));
+};
+
+SteamTradeOffers.prototype.getItemsFromReceipt = function(trade_id, callback) {
+    var options = {
+        uri: 'https://steamcommunity.com/trade/' + trade_id + '/receipt',
+        json: true
+    };
+
+    this._request.get(options, function(error, response, body) {
+        if (error || response.statusCode != 200) {
+            this.emit('debug', 'loading receipt: ' + (error || response.statusCode != 200));
+            return callback(error || new Error(response.statusCode));
+        }
+        if (!body || body.success == false) {
+            this.emit('debug', 'loading receipt: invalid response');
+            return callback(new Error(403));
+        }
+
+        var script = body.match(/(var oItem;[\s\S]*)<\/script>/);
+        if (!script) {
+            // no session
+            callback(new Error('Failed to lookup items in receipt'));
+            return;
+        }
+
+        var items = [];
+
+        try {
+            // prepare to execute the script in the page
+            var UserYou;
+            function BuildHover(str, item) {
+                items.push(item);
+            }
+            function $() {
+                return {
+                    show: function() {}
+                };
+            }
+
+            // evil magic happens here
+            eval(script[1]);
+        } catch (e) {
+            callback(new Error('Failed to lookup items in receipt: exception during eval'));
+            return;
+        }
+
+        callback(null, items);
+    }.bind(this));
 };
 
 SteamTradeOffers.prototype.loadMyInventory = function(options, callback) {
