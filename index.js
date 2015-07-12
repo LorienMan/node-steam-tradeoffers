@@ -1,6 +1,6 @@
 module.exports = SteamTradeOffers;
 
-var request = require('request').defaults({ timeout: 5000 });
+var request = require('request').defaults({ timeout: 5000, pool: false, agent: false });
 var cheerio = require('cheerio');
 var Long = require('long');
 var url = require('url');
